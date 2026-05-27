@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactElement } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { listProjects, listLogs } from '../utils/db';
+import { listProjects, listLogs, listReportSummariesForPeriod, saveReportSummary, deleteReportSummary, type ReportSummary } from '../utils/db';
 import {
   toIsoDate,
   startOfWeek,
@@ -9,6 +9,7 @@ import {
   endOfMonth,
   latestProgress,
 } from '../utils/storage';
+import { generateReportSummary } from '../utils/openai';
 import { useToast } from '../contexts/ToastContext';
 import type { Project, WorkLog } from '../types';
 
@@ -20,7 +21,9 @@ const WorkLogReport = (): ReactElement => {
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [logs, setLogs] = useState<WorkLog[]>([]);
+  const [summaries, setSummaries] = useState<ReportSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generatingKey, setGeneratingKey] = useState<string | null>(null);
 
   const range = (params.get('range') as Range) || 'weekly';
   const anchor = params.get('date') || toIsoDate(new Date());
@@ -32,11 +35,21 @@ const WorkLogReport = (): ReactElement => {
     setParams(next, { replace: true });
   };
 
+  const { startDate, endDate } = useMemo(() => {
+    if (range === 'weekly') return { startDate: startOfWeek(anchor), endDate: endOfWeek(anchor) };
+    return { startDate: startOfMonth(anchor), endDate: endOfMonth(anchor) };
+  }, [range, anchor]);
+
   useEffect(() => {
     const load = async () => {
-      const [p, l] = await Promise.all([listProjects(), listLogs()]);
+      const [p, l, s] = await Promise.all([
+        listProjects(),
+        listLogs(),
+        listReportSummariesForPeriod(range, startDate, endDate),
+      ]);
       setProjects(p);
       setLogs(l);
+      setSummaries(s);
       setLoading(false);
     };
     load().catch((err) => {
@@ -44,12 +57,7 @@ const WorkLogReport = (): ReactElement => {
       showToast('데이터를 불러오는 중 오류가 발생했습니다.', 'error');
       setLoading(false);
     });
-  }, []);
-
-  const { startDate, endDate } = useMemo(() => {
-    if (range === 'weekly') return { startDate: startOfWeek(anchor), endDate: endOfWeek(anchor) };
-    return { startDate: startOfMonth(anchor), endDate: endOfMonth(anchor) };
-  }, [range, anchor]);
+  }, [range, startDate, endDate]);
 
   const targetProjects = useMemo(
     () => (projectId ? projects.filter((p) => p.id === projectId) : projects),
@@ -58,6 +66,39 @@ const WorkLogReport = (): ReactElement => {
 
   const rangeLabel = range === 'weekly' ? '주간' : '월간';
   const today = toIsoDate(new Date());
+
+  const getSummary = (key: string) => summaries.find((s) => s.projectKey === key);
+
+  const handleGenerate = async (projectKey: string, projectName: string, items: string[]) => {
+    setGeneratingKey(projectKey);
+    try {
+      const content = await generateReportSummary(rangeLabel, startDate, endDate, projectName, items);
+      const saved = await saveReportSummary(projectKey, range, startDate, endDate, content);
+      setSummaries((prev) => {
+        const filtered = prev.filter((s) => s.projectKey !== projectKey);
+        return [...filtered, saved];
+      });
+      showToast('AI 요약이 생성되었습니다.', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast(err instanceof Error ? err.message : 'AI 요약 생성 중 오류가 발생했습니다.', 'error');
+    } finally {
+      setGeneratingKey(null);
+    }
+  };
+
+  const handleDelete = async (projectKey: string) => {
+    const existing = getSummary(projectKey);
+    if (!existing) return;
+    try {
+      await deleteReportSummary(existing.id);
+      setSummaries((prev) => prev.filter((s) => s.projectKey !== projectKey));
+      showToast('AI 요약이 삭제되었습니다.', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('AI 요약 삭제 중 오류가 발생했습니다.', 'error');
+    }
+  };
 
   if (loading) {
     return (
@@ -139,12 +180,14 @@ const WorkLogReport = (): ReactElement => {
             const inRange = pLogs.filter((l) => l.date >= startDate && l.date <= endDate);
             const prog = latestProgress(pLogs);
 
-            // 기간 내 전체 작업 항목을 중복 제거하여 통합
             const allItems = Array.from(
               new Set(inRange.flatMap((l) => l.items.map((it) => it.trim())).filter(Boolean))
             );
 
             if (allItems.length === 0) return null;
+
+            const existing = getSummary(p.id);
+            const isGenerating = generatingKey === p.id;
 
             return (
               <div className="rpt-project" key={p.id}>
@@ -155,9 +198,49 @@ const WorkLogReport = (): ReactElement => {
                 <div className="rpt-progress-bar">
                   <div className="rpt-progress-fill" style={{ width: `${prog}%` }} />
                 </div>
-                <ul className="rpt-item-list">
-                  {allItems.map((it, i) => <li key={i}>{it}</li>)}
-                </ul>
+
+                {/* AI 요약 또는 원본 항목 */}
+                {existing ? (
+                  <div className="rpt-ai-content">
+                    {existing.content.split('\n').filter(Boolean).map((line, i) => (
+                      <p key={i} className="rpt-ai-line">{line}</p>
+                    ))}
+                  </div>
+                ) : (
+                  <ul className="rpt-item-list">
+                    {allItems.map((it, i) => <li key={i}>{it}</li>)}
+                  </ul>
+                )}
+
+                {/* Screen-only AI controls */}
+                <div className="rpt-ai-controls">
+                  {existing ? (
+                    <>
+                      <button
+                        className="rpt-ai-btn rpt-ai-btn-regen"
+                        disabled={isGenerating}
+                        onClick={() => handleGenerate(p.id, p.name, allItems)}
+                      >
+                        {isGenerating ? '생성 중…' : '↺ 재생성'}
+                      </button>
+                      <button
+                        className="rpt-ai-btn rpt-ai-btn-del"
+                        disabled={isGenerating}
+                        onClick={() => handleDelete(p.id)}
+                      >
+                        원본으로 복원
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="rpt-ai-btn rpt-ai-btn-gen"
+                      disabled={isGenerating}
+                      onClick={() => handleGenerate(p.id, p.name, allItems)}
+                    >
+                      {isGenerating ? '생성 중…' : '✦ AI 요약 생성'}
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })

@@ -199,6 +199,49 @@
   border-top: 2px solid #1B2A4A;
 }
 
+/* ── AI summary content (replaces item list when generated) ── */
+.rpt-ai-content {
+  margin: 0 0 10px 4px;
+  font-size: 10pt;
+  color: #222;
+  line-height: 1.85;
+}
+.rpt-ai-line {
+  margin: 0 0 4px 0;
+}
+
+/* ── Screen-only AI action buttons ── */
+.rpt-ai-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.rpt-ai-btn {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+.rpt-ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.rpt-ai-btn-gen {
+  background: #1B2A4A;
+  color: #fff;
+  border-color: #1B2A4A;
+}
+.rpt-ai-btn-regen {
+  background: #f0f2f8;
+  color: #1B2A4A;
+  border-color: #c6cde0;
+}
+.rpt-ai-btn-del {
+  background: #fff;
+  color: #6b7280;
+  border-color: #d1d5db;
+}
+
 /* ── Footer ── */
 .rpt-doc-footer {
   margin-top: 48px;
@@ -222,7 +265,8 @@
   .topbar,
   .navbar,
   .footer,
-  .rpt-screen-controls {
+  .rpt-screen-controls,
+  .rpt-ai-controls {
     display: none !important;
   }
 

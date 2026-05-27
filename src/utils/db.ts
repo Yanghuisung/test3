@@ -249,6 +249,68 @@ export const deleteLog = async (id: string): Promise<void> => {
   if (error) throw error;
 };
 
+/* ── Report Summaries ────────────────────── */
+
+export interface ReportSummary {
+  id: string;
+  projectKey: string; // 프로젝트 UUID 또는 'ALL'
+  range: string;
+  startDate: string;
+  endDate: string;
+  content: string;
+  createdAt: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const toReportSummary = (r: any): ReportSummary => ({
+  id: r.id,
+  projectKey: r.project_key,
+  range: r.range,
+  startDate: r.start_date,
+  endDate: r.end_date,
+  content: r.content,
+  createdAt: r.created_at,
+});
+
+export const listReportSummariesForPeriod = async (
+  range: string,
+  startDate: string,
+  endDate: string
+): Promise<ReportSummary[]> => {
+  const { data, error } = await supabase
+    .from('report_summaries')
+    .select('*')
+    .eq('range', range)
+    .eq('start_date', startDate)
+    .eq('end_date', endDate);
+  if (error) throw error;
+  return (data ?? []).map(toReportSummary);
+};
+
+export const saveReportSummary = async (
+  projectKey: string,
+  range: string,
+  startDate: string,
+  endDate: string,
+  content: string
+): Promise<ReportSummary> => {
+  const { data, error } = await supabase
+    .from('report_summaries')
+    .upsert(
+      { project_key: projectKey, range, start_date: startDate, end_date: endDate, content },
+      { onConflict: 'project_key,range,start_date,end_date' }
+    )
+    .select()
+    .single();
+  if (error) throw error;
+  return toReportSummary(data);
+};
+
+export const deleteReportSummary = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('report_summaries').delete().eq('id', id);
+  if (error) throw error;
+};
+
 /* ── Seed (첫 실행 샘플 데이터) ─────────────── */
 
 const ymd = (base: Date, offset: number): string => {

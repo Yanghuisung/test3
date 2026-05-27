@@ -32,6 +32,7 @@ jobs:
           GITHUB_PAGES: 'true'
           VITE_SUPABASE_URL: 'https://hptdhidymuqklfbcbhvr.supabase.co'
           VITE_SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwdGRoaWR5bXVxa2xmYmNiaHZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4Mjc0OTksImV4cCI6MjA5NTQwMzQ5OX0.gxCkvwMBfPTweRILYffVg34IFgqPiHZDk213QCspjLA'
+          VITE_OPENAI_API_KEY: ${{ secrets.VITE_OPENAI_API_KEY }}
         run: npm run build
 
       - name: SPA 404 fallback
