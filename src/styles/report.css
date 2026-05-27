@@ -92,30 +92,10 @@
   width: 90px;
 }
 .rpt-approval-sig td {
-  height: 64px;
+  height: 80px;
   border: 1.5px solid #1B2A4A;
   border-top: none;
 }
-.rpt-approval-name td {
-  border: 1.5px solid #1B2A4A;
-  border-top: 1px solid #b0bec8;
-  padding: 5px 8px;
-  text-align: center;
-  font-size: 9pt;
-}
-.rpt-name-input {
-  width: 100%;
-  border: none;
-  border-bottom: 1px dashed #aaa;
-  outline: none;
-  text-align: center;
-  font-size: 9pt;
-  font-family: inherit;
-  background: transparent;
-  color: #111;
-  padding: 0 2px;
-}
-.rpt-name-input::placeholder { color: #bbb; }
 
 /* ── Horizontal rule after header ── */
 .rpt-divider {
@@ -254,7 +234,4 @@
 
   /* keep page breaks tidy */
   .rpt-project { page-break-inside: avoid; }
-
-  /* show dashed border on name inputs when printed */
-  .rpt-name-input { border-bottom: 1px solid #888; }
 }

@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useState, type ReactElement, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState, type ReactElement } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { listProjects, listMembers, listLogs } from '../utils/db';
+import { listProjects, listLogs } from '../utils/db';
 import {
-  summarize,
-  memberHoursSummary,
   toIsoDate,
   startOfWeek,
   endOfWeek,
@@ -12,25 +10,17 @@ import {
   latestProgress,
 } from '../utils/storage';
 import { useToast } from '../contexts/ToastContext';
-import type { Project, Member, WorkLog } from '../types';
+import type { Project, WorkLog } from '../types';
 
 type Range = 'weekly' | 'monthly';
-
-interface ApprovalNames {
-  writer: string;
-  reviewer: string;
-  approver: string;
-}
 
 const WorkLogReport = (): ReactElement => {
   const { showToast } = useToast();
   const [params] = useSearchParams();
 
   const [projects, setProjects] = useState<Project[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
   const [logs, setLogs] = useState<WorkLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [names, setNames] = useState<ApprovalNames>({ writer: '', reviewer: '', approver: '' });
 
   const range = (params.get('range') as Range) || 'weekly';
   const anchor = params.get('date') || toIsoDate(new Date());
@@ -38,9 +28,8 @@ const WorkLogReport = (): ReactElement => {
 
   useEffect(() => {
     const load = async () => {
-      const [p, m, l] = await Promise.all([listProjects(), listMembers(), listLogs()]);
+      const [p, l] = await Promise.all([listProjects(), listLogs()]);
       setProjects(p);
-      setMembers(m);
       setLogs(l);
       setLoading(false);
     };
@@ -63,9 +52,6 @@ const WorkLogReport = (): ReactElement => {
 
   const rangeLabel = range === 'weekly' ? '주간' : '월간';
   const today = toIsoDate(new Date());
-
-  const setName = (field: keyof ApprovalNames) => (e: ChangeEvent<HTMLInputElement>) =>
-    setNames((prev) => ({ ...prev, [field]: e.target.value }));
 
   if (loading) {
     return (
@@ -119,32 +105,6 @@ const WorkLogReport = (): ReactElement => {
                 <td />
                 <td />
               </tr>
-              <tr className="rpt-approval-name">
-                <td>
-                  <input
-                    className="rpt-name-input"
-                    value={names.writer}
-                    onChange={setName('writer')}
-                    placeholder="이름"
-                  />
-                </td>
-                <td>
-                  <input
-                    className="rpt-name-input"
-                    value={names.reviewer}
-                    onChange={setName('reviewer')}
-                    placeholder="이름"
-                  />
-                </td>
-                <td>
-                  <input
-                    className="rpt-name-input"
-                    value={names.approver}
-                    onChange={setName('approver')}
-                    placeholder="이름"
-                  />
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>
@@ -159,12 +119,15 @@ const WorkLogReport = (): ReactElement => {
         ) : (
           targetProjects.map((p) => {
             const pLogs = logs.filter((l) => l.projectId === p.id);
-            const groups = summarize(pLogs, startDate, endDate, members);
-            const hoursData = memberHoursSummary(pLogs, startDate, endDate, members);
-            const totalHours = hoursData.reduce((s, h) => s + h.hours, 0);
+            const inRange = pLogs.filter((l) => l.date >= startDate && l.date <= endDate);
             const prog = latestProgress(pLogs);
 
-            if (groups.length === 0) return null;
+            // 기간 내 전체 작업 항목을 중복 제거하여 통합
+            const allItems = Array.from(
+              new Set(inRange.flatMap((l) => l.items.map((it) => it.trim())).filter(Boolean))
+            );
+
+            if (allItems.length === 0) return null;
 
             return (
               <div className="rpt-project" key={p.id}>
@@ -175,38 +138,9 @@ const WorkLogReport = (): ReactElement => {
                 <div className="rpt-progress-bar">
                   <div className="rpt-progress-fill" style={{ width: `${prog}%` }} />
                 </div>
-
-                {groups.map((g) => (
-                  <div className="rpt-member-block" key={g.memberId}>
-                    <div className="rpt-member-name">▸ {g.memberName}</div>
-                    <ul className="rpt-item-list">
-                      {g.items.map((it, i) => <li key={i}>{it}</li>)}
-                    </ul>
-                  </div>
-                ))}
-
-                {hoursData.length > 0 && (
-                  <div className="rpt-hours-wrap">
-                    <div className="rpt-hours-label">투입 공수</div>
-                    <table className="rpt-hours-table">
-                      <thead>
-                        <tr><th>구성원</th><th>공수 (h)</th></tr>
-                      </thead>
-                      <tbody>
-                        {hoursData.map((h) => (
-                          <tr key={h.memberId}>
-                            <td>{h.memberName}</td>
-                            <td>{h.hours}h</td>
-                          </tr>
-                        ))}
-                        <tr className="rpt-hours-total">
-                          <td>합계</td>
-                          <td>{totalHours}h</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                <ul className="rpt-item-list">
+                  {allItems.map((it, i) => <li key={i}>{it}</li>)}
+                </ul>
               </div>
             );
           })
