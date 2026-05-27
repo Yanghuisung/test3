@@ -110,6 +110,33 @@ export const summarize = (
   return groups.sort((a, b) => a.memberName.localeCompare(b.memberName));
 };
 
+export interface MemberHours {
+  memberId: string;
+  memberName: string;
+  hours: number;
+}
+
+export const memberHoursSummary = (
+  logs: WorkLog[],
+  startDate: string,
+  endDate: string,
+  members: Member[]
+): MemberHours[] => {
+  const inRange = logs.filter((l) => l.date >= startDate && l.date <= endDate);
+  const byMember = new Map<string, number>();
+  for (const l of inRange) {
+    if (typeof l.hours === 'number') {
+      byMember.set(l.memberId, (byMember.get(l.memberId) ?? 0) + l.hours);
+    }
+  }
+  return Array.from(byMember.entries())
+    .map(([memberId, hours]) => {
+      const m = members.find((x) => x.id === memberId);
+      return { memberId, memberName: m?.name ?? '(알 수 없음)', hours };
+    })
+    .sort((a, b) => b.hours - a.hours);
+};
+
 export interface DashboardKpi {
   totalProjects: number;
   activeProjects: number;

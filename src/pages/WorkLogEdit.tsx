@@ -1,60 +1,54 @@
 import { useEffect, useMemo, useState, type ReactElement, type FormEvent, type KeyboardEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { listProjects, listMembers, saveLog } from '../utils/db';
-import { toIsoDate } from '../utils/storage';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { getLog, listProjects, listMembers, saveLog } from '../utils/db';
 import type { Project, Member } from '../types';
 
 const PRESETS = ['회의', '개발', '검토', '보고', '테스트', '설계', '분석', '문서화', '배포'];
 
-const WorkLogNew = (): ReactElement => {
+const WorkLogEdit = (): ReactElement => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const initialProjectId = params.get('projectId') ?? '';
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  const [projectId, setProjectId] = useState(initialProjectId);
+  const [projectId, setProjectId] = useState('');
   const [memberId, setMemberId] = useState('');
-  const [date, setDate] = useState(toIsoDate(new Date()));
+  const [date, setDate] = useState('');
   const [hours, setHours] = useState<string>('');
   const [progress, setProgress] = useState<string>('');
   const [items, setItems] = useState<string[]>(['']);
 
   useEffect(() => {
     const load = async () => {
-      const [p, m] = await Promise.all([listProjects(), listMembers()]);
+      const [log, p, m] = await Promise.all([getLog(id!), listProjects(), listMembers()]);
+      if (!log) { setNotFound(true); setLoading(false); return; }
       setProjects(p);
       setMembers(m);
+      setProjectId(log.projectId);
+      setMemberId(log.memberId);
+      setDate(log.date);
+      setHours(log.hours != null ? String(log.hours) : '');
+      setProgress(log.progress != null ? String(log.progress) : '');
+      setItems(log.items.length > 0 ? log.items : ['']);
+      setLoading(false);
     };
     load().catch(console.error);
-  }, []);
+  }, [id]);
 
   const selectedProject = useMemo(() => projects.find((p) => p.id === projectId), [projects, projectId]);
   const eligibleMembers = useMemo(() => {
-    if (!selectedProject) return members;
-    if (selectedProject.memberIds.length === 0) return members;
+    if (!selectedProject || selectedProject.memberIds.length === 0) return members;
     return members.filter((m) => selectedProject.memberIds.includes(m.id));
   }, [selectedProject, members]);
 
-  useEffect(() => {
-    if (memberId && !eligibleMembers.some((m) => m.id === memberId)) {
-      setMemberId('');
-    }
-  }, [eligibleMembers, memberId]);
-
-  const updateItem = (i: number, v: string) => {
-    setItems((prev) => prev.map((x, idx) => (idx === i ? v : x)));
-  };
+  const updateItem = (i: number, v: string) => setItems((prev) => prev.map((x, idx) => (idx === i ? v : x)));
   const addItem = () => setItems((prev) => [...prev, '']);
-  const removeItem = (i: number) => {
-    setItems((prev) => (prev.length === 1 ? [''] : prev.filter((_, idx) => idx !== i)));
-  };
+  const removeItem = (i: number) => setItems((prev) => (prev.length === 1 ? [''] : prev.filter((_, idx) => idx !== i)));
   const handleItemKey = (e: KeyboardEvent<HTMLInputElement>, i: number) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (i === items.length - 1) addItem();
-    }
+    if (e.key === 'Enter') { e.preventDefault(); if (i === items.length - 1) addItem(); }
   };
   const addPreset = (preset: string) => {
     setItems((prev) => {
@@ -69,33 +63,35 @@ const WorkLogNew = (): ReactElement => {
     if (!memberId) return alert('작성자를 선택해 주세요.');
     const cleaned = items.map((x) => x.trim()).filter(Boolean);
     if (cleaned.length === 0) return alert('최소 하나의 항목을 입력해 주세요.');
-
     const hoursNum = hours.trim() === '' ? undefined : Number(hours);
     if (hoursNum !== undefined && (Number.isNaN(hoursNum) || hoursNum < 0)) return alert('공수는 0 이상의 숫자입니다.');
-
     const progNum = progress.trim() === '' ? undefined : Number(progress);
     if (progNum !== undefined && (Number.isNaN(progNum) || progNum < 0 || progNum > 100)) return alert('진척률은 0~100 범위입니다.');
 
-    saveLog({
-      projectId,
-      memberId,
-      date,
-      items: cleaned,
-      hours: hoursNum,
-      progress: progNum,
-    })
+    saveLog({ id, projectId, memberId, date, items: cleaned, hours: hoursNum, progress: progNum })
       .then(() => navigate(`/projects/${projectId}`))
       .catch(console.error);
   };
+
+  if (loading) return <div className="wl-container"><div className="wl-empty">불러오는 중…</div></div>;
+
+  if (notFound) return (
+    <div className="wl-container">
+      <div className="wl-empty">
+        <h3>일지를 찾을 수 없습니다</h3>
+        <Link to="/" className="wl-btn">대시보드로</Link>
+      </div>
+    </div>
+  );
 
   return (
     <div className="wl-container">
       <div className="wl-page-header">
         <div>
-          <h1 className="wl-page-title">일지 작성</h1>
-          <p className="wl-page-sub">개조식으로 작업 항목을 한 줄씩 입력하세요. (Enter로 다음 항목)</p>
+          <h1 className="wl-page-title">일지 수정</h1>
+          <p className="wl-page-sub">내용을 수정하고 저장하세요.</p>
         </div>
-        <Link to="/" className="wl-btn">대시보드로</Link>
+        <Link to={`/projects/${projectId}`} className="wl-btn">프로젝트로</Link>
       </div>
 
       <div className="wl-section">
@@ -158,7 +154,7 @@ const WorkLogNew = (): ReactElement => {
 
           <div className="wl-form-actions">
             <button type="submit" className="wl-btn wl-btn-primary">저장</button>
-            <Link to="/" className="wl-btn">취소</Link>
+            <Link to={`/projects/${projectId}`} className="wl-btn">취소</Link>
           </div>
         </form>
       </div>
@@ -166,4 +162,4 @@ const WorkLogNew = (): ReactElement => {
   );
 };
 
-export default WorkLogNew;
+export default WorkLogEdit;

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { listProjects, listMembers, listLogs } from '../utils/db';
 import {
   summarize,
+  memberHoursSummary,
   toIsoDate,
   startOfWeek,
   endOfWeek,
@@ -70,6 +71,11 @@ const SummaryPage = (): ReactElement => {
         lines.push(`  ▸ ${g.memberName}`);
         for (const item of g.items) lines.push(`    - ${item}`);
       }
+      const hoursData = memberHoursSummary(pLogs, startDate, endDate, members);
+      if (hoursData.length > 0) {
+        lines.push('  [투입 공수]');
+        for (const h of hoursData) lines.push(`    ${h.memberName}: ${h.hours}h`);
+      }
       lines.push('');
     }
     const text = lines.join('\n');
@@ -125,6 +131,8 @@ const SummaryPage = (): ReactElement => {
         targetProjects.map((p) => {
           const pLogs = logs.filter((l) => l.projectId === p.id);
           const groups = summarize(pLogs, startDate, endDate, members);
+          const hoursData = memberHoursSummary(pLogs, startDate, endDate, members);
+          const totalHours = hoursData.reduce((s, h) => s + h.hours, 0);
           const prog = latestProgress(pLogs);
           return (
             <div className="wl-section" key={p.id}>
@@ -139,14 +147,38 @@ const SummaryPage = (): ReactElement => {
               {groups.length === 0 ? (
                 <p className="wl-kpi-hint" style={{ margin: 0 }}>해당 구간에 작성된 일지가 없습니다.</p>
               ) : (
-                groups.map((g) => (
-                  <div className="wl-summary-card" key={g.memberId}>
-                    <div className="wl-summary-member">{g.memberName}</div>
-                    <ul className="wl-summary-list">
-                      {g.items.map((it, i) => <li key={i}>{it}</li>)}
-                    </ul>
-                  </div>
-                ))
+                <>
+                  {groups.map((g) => (
+                    <div className="wl-summary-card" key={g.memberId}>
+                      <div className="wl-summary-member">{g.memberName}</div>
+                      <ul className="wl-summary-list">
+                        {g.items.map((it, i) => <li key={i}>{it}</li>)}
+                      </ul>
+                    </div>
+                  ))}
+                  {hoursData.length > 0 && (
+                    <div className="wl-hours-block">
+                      <div className="wl-hours-title">투입 공수</div>
+                      <table className="wl-hours-table">
+                        <thead>
+                          <tr><th>구성원</th><th>공수 (h)</th></tr>
+                        </thead>
+                        <tbody>
+                          {hoursData.map((h) => (
+                            <tr key={h.memberId}>
+                              <td>{h.memberName}</td>
+                              <td>{h.hours}h</td>
+                            </tr>
+                          ))}
+                          <tr className="wl-hours-total">
+                            <td>합계</td>
+                            <td>{totalHours}h</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           );

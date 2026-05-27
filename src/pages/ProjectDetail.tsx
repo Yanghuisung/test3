@@ -166,7 +166,10 @@ const ProjectDetail = (): ReactElement => {
                     </td>
                     <td>{l.hours ? `${l.hours}h` : '—'}</td>
                     <td>{typeof l.progress === 'number' ? `${l.progress}%` : '—'}</td>
-                    <td><button className="wl-btn wl-btn-sm wl-btn-danger" onClick={() => handleLogDelete(l.id)}>삭제</button></td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <Link to={`/logs/${l.id}/edit`} className="wl-btn wl-btn-sm" style={{ marginRight: 6 }}>수정</Link>
+                      <button className="wl-btn wl-btn-sm wl-btn-danger" onClick={() => handleLogDelete(l.id)}>삭제</button>
+                    </td>
                   </tr>
                 );
               })}

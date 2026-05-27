@@ -317,6 +317,68 @@
 .wl-delayed-name a:hover { text-decoration: underline; }
 .wl-delayed-reason { color: #C8102E; font-size: 13px; }
 
+/* ── Preset tags ── */
+.wl-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.wl-preset-tag {
+  padding: 4px 14px;
+  border: 1px solid var(--accent, #1B2A4A);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent, #1B2A4A);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.wl-preset-tag:hover {
+  background: var(--accent, #1B2A4A);
+  color: #fff;
+}
+
+/* ── Hours summary in summary page ── */
+.wl-hours-block {
+  margin-top: 16px;
+  border-top: 1px solid var(--border, #e5e7eb);
+  padding-top: 14px;
+}
+.wl-hours-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.wl-hours-table {
+  width: 100%;
+  max-width: 320px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.wl-hours-table th,
+.wl-hours-table td {
+  padding: 7px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+.wl-hours-table th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted, #6b7280);
+  background: var(--surface, #f9fafb);
+}
+.wl-hours-total td {
+  font-weight: 700;
+  color: var(--text-primary, #111);
+  border-top: 2px solid var(--border, #e5e7eb);
+  border-bottom: none;
+}
+
 /* ── Empty state ── */
 .wl-empty {
   text-align: center;
