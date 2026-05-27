@@ -1,21 +1,25 @@
 import { useEffect, useState, type ReactElement } from 'react';
 import { Link } from 'react-router-dom';
+import { listProjects, listLogs, listMembers } from '../utils/db';
 import {
-  listProjects,
-  listLogs,
-  listMembers,
   dashboardKpi,
   progressSeries,
   latestProgress,
   delayedProjects,
   toIsoDate,
   daysBetween,
+  type DashboardKpi,
   type DelayedProject,
   type ProgressPoint,
 } from '../utils/storage';
 import type { Project, Member, WorkLog } from '../types';
 
 const STALE_DAYS = 7;
+
+const KPI_INIT: DashboardKpi = {
+  totalProjects: 0, activeProjects: 0, completedProjects: 0,
+  totalMembers: 0, todayLogs: 0, weekLogs: 0,
+};
 
 const ProgressMiniChart = ({ data }: { data: ProgressPoint[] }): ReactElement => {
   const W = 320;
@@ -50,16 +54,22 @@ const Dashboard = (): ReactElement => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [logs, setLogs] = useState<WorkLog[]>([]);
-
-  useEffect(() => {
-    setProjects(listProjects());
-    setMembers(listMembers());
-    setLogs(listLogs());
-  }, []);
+  const [kpi, setKpi] = useState<DashboardKpi>(KPI_INIT);
+  const [delayed, setDelayed] = useState<DelayedProject[]>([]);
 
   const today = toIsoDate(new Date());
-  const kpi = dashboardKpi(today);
-  const delayed: DelayedProject[] = delayedProjects(STALE_DAYS, today);
+
+  useEffect(() => {
+    const load = async () => {
+      const [p, m, l] = await Promise.all([listProjects(), listMembers(), listLogs()]);
+      setProjects(p);
+      setMembers(m);
+      setLogs(l);
+      setKpi(dashboardKpi(p, l, m, today));
+      setDelayed(delayedProjects(p, l, STALE_DAYS, today));
+    };
+    load().catch(console.error);
+  }, []);
 
   const activeProjects = projects.filter((p) => p.status === 'active');
 
@@ -124,8 +134,9 @@ const Dashboard = (): ReactElement => {
         ) : (
           <div className="wl-trend-grid">
             {activeProjects.map((p) => {
-              const series = progressSeries(p.id);
-              const prog = latestProgress(p.id);
+              const pLogs = logs.filter((l) => l.projectId === p.id);
+              const series = progressSeries(pLogs);
+              const prog = latestProgress(pLogs);
               return (
                 <div className="wl-trend-card" key={p.id}>
                   <div className="wl-trend-head">

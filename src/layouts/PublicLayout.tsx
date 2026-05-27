@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, type ReactElement } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import { seedIfEmpty } from '../utils/storage';
+import { seedIfEmpty } from '../utils/db';
 
 const Dashboard      = lazy(() => import('../pages/Dashboard'));
 const ProjectsList   = lazy(() => import('../pages/ProjectsList'));
@@ -21,7 +21,7 @@ const Loading = (): ReactElement => (
 
 const PublicLayout = (): ReactElement => {
   useEffect(() => {
-    seedIfEmpty();
+    seedIfEmpty().catch(console.error);
   }, []);
 
   return (

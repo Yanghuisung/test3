@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactElement, type FormEvent, type KeyboardEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { listProjects, listMembers, saveLog, toIsoDate } from '../utils/storage';
+import { listProjects, listMembers, saveLog } from '../utils/db';
+import { toIsoDate } from '../utils/storage';
 import type { Project, Member } from '../types';
 
 const WorkLogNew = (): ReactElement => {
@@ -19,8 +20,12 @@ const WorkLogNew = (): ReactElement => {
   const [items, setItems] = useState<string[]>(['']);
 
   useEffect(() => {
-    setProjects(listProjects());
-    setMembers(listMembers());
+    const load = async () => {
+      const [p, m] = await Promise.all([listProjects(), listMembers()]);
+      setProjects(p);
+      setMembers(m);
+    };
+    load().catch(console.error);
   }, []);
 
   const selectedProject = useMemo(() => projects.find((p) => p.id === projectId), [projects, projectId]);
@@ -70,8 +75,9 @@ const WorkLogNew = (): ReactElement => {
       items: cleaned,
       hours: hoursNum,
       progress: progNum,
-    });
-    navigate(`/projects/${projectId}`);
+    })
+      .then(() => navigate(`/projects/${projectId}`))
+      .catch(console.error);
   };
 
   return (
@@ -115,7 +121,7 @@ const WorkLogNew = (): ReactElement => {
                   <input
                     type="text"
                     value={it}
-                    placeholder={`예: 요구사항 정의 회의 진행`}
+                    placeholder="예: 요구사항 정의 회의 진행"
                     onChange={(e) => updateItem(i, e.target.value)}
                     onKeyDown={(e) => handleItemKey(e, i)}
                   />

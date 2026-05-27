@@ -1,14 +1,7 @@
-import { useEffect, useState, type ReactElement } from 'react';
+import { useEffect, useState, useCallback, type ReactElement } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import {
-  getProject,
-  listMembers,
-  logsByProject,
-  latestProgress,
-  progressSeries,
-  deleteProject,
-  deleteLog,
-} from '../utils/storage';
+import { getProject, listMembers, logsByProject, deleteProject, deleteLog } from '../utils/db';
+import { latestProgress, progressSeries } from '../utils/storage';
 import type { Project, Member, WorkLog } from '../types';
 
 const statusLabel: Record<Project['status'], string> = {
@@ -24,14 +17,15 @@ const ProjectDetail = (): ReactElement => {
   const [members, setMembers] = useState<Member[]>([]);
   const [logs, setLogs] = useState<WorkLog[]>([]);
 
-  const refresh = () => {
+  const refresh = useCallback(async () => {
     if (!id) return;
-    setProject(getProject(id));
-    setMembers(listMembers());
-    setLogs(logsByProject(id));
-  };
+    const [p, m, l] = await Promise.all([getProject(id), listMembers(), logsByProject(id)]);
+    setProject(p);
+    setMembers(m);
+    setLogs(l);
+  }, [id]);
 
-  useEffect(refresh, [id]);
+  useEffect(() => { refresh().catch(console.error); }, [refresh]);
 
   if (!project) {
     return (
@@ -44,19 +38,21 @@ const ProjectDetail = (): ReactElement => {
     );
   }
 
-  const prog = latestProgress(project.id);
-  const series = progressSeries(project.id);
+  const prog = latestProgress(logs);
+  const series = progressSeries(logs);
 
   const handleDelete = () => {
     if (!confirm(`"${project.name}" 프로젝트를 삭제할까요? 관련 일지도 함께 제거됩니다.`)) return;
-    deleteProject(project.id);
-    navigate('/projects');
+    deleteProject(project.id)
+      .then(() => navigate('/projects'))
+      .catch(console.error);
   };
 
   const handleLogDelete = (logId: string) => {
     if (!confirm('이 일지를 삭제할까요?')) return;
-    deleteLog(logId);
-    refresh();
+    deleteLog(logId)
+      .then(() => refresh())
+      .catch(console.error);
   };
 
   // Sparkline
@@ -83,7 +79,7 @@ const ProjectDetail = (): ReactElement => {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Link to="/logs/new" className="wl-btn wl-btn-primary">+ 일지 작성</Link>
+          <Link to={`/logs/new?projectId=${project.id}`} className="wl-btn wl-btn-primary">+ 일지 작성</Link>
           <Link to={`/projects/${project.id}/edit`} className="wl-btn">수정</Link>
           <button className="wl-btn wl-btn-danger" onClick={handleDelete}>삭제</button>
         </div>

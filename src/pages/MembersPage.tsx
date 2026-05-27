@@ -1,6 +1,6 @@
-import { useEffect, useState, type ReactElement, type FormEvent } from 'react';
+import { useEffect, useState, useCallback, type ReactElement, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { listMembers, saveMember, deleteMember, listProjects } from '../utils/storage';
+import { listMembers, saveMember, deleteMember, listProjects } from '../utils/db';
 import type { Member, Project } from '../types';
 
 const MembersPage = (): ReactElement => {
@@ -11,12 +11,13 @@ const MembersPage = (): ReactElement => {
   const [role, setRole] = useState('');
   const [email, setEmail] = useState('');
 
-  const refresh = () => {
-    setMembers(listMembers());
-    setProjects(listProjects());
-  };
+  const refresh = useCallback(async () => {
+    const [m, p] = await Promise.all([listMembers(), listProjects()]);
+    setMembers(m);
+    setProjects(p);
+  }, []);
 
-  useEffect(refresh, []);
+  useEffect(() => { refresh().catch(console.error); }, [refresh]);
 
   const resetForm = () => {
     setEditing(null);
@@ -43,18 +44,18 @@ const MembersPage = (): ReactElement => {
       name: name.trim(),
       role: role.trim() || undefined,
       email: email.trim() || undefined,
-    });
-    resetForm();
-    refresh();
+    })
+      .then(() => { resetForm(); return refresh(); })
+      .catch(console.error);
   };
 
   const handleDelete = (m: Member) => {
     const projectCount = projects.filter((p) => p.memberIds.includes(m.id)).length;
     const note = projectCount > 0 ? `\n현재 ${projectCount}개 프로젝트에 배정되어 있으며, 해당 배정에서도 제거됩니다.` : '';
     if (!confirm(`"${m.name}"을(를) 삭제할까요?${note}`)) return;
-    deleteMember(m.id);
-    if (editing?.id === m.id) resetForm();
-    refresh();
+    deleteMember(m.id)
+      .then(() => { if (editing?.id === m.id) resetForm(); return refresh(); })
+      .catch(console.error);
   };
 
   return (

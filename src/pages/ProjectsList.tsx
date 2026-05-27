@@ -1,14 +1,8 @@
 import { useEffect, useState, type ReactElement } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  listProjects,
-  listMembers,
-  latestProgress,
-  lastLogDate,
-  toIsoDate,
-  daysBetween,
-} from '../utils/storage';
-import type { Project, Member } from '../types';
+import { listProjects, listMembers, listLogs } from '../utils/db';
+import { latestProgress, lastLogDate, toIsoDate, daysBetween } from '../utils/storage';
+import type { Project, Member, WorkLog } from '../types';
 
 const statusLabel: Record<Project['status'], string> = {
   active: '진행',
@@ -19,10 +13,16 @@ const statusLabel: Record<Project['status'], string> = {
 const ProjectsList = (): ReactElement => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
+  const [logs, setLogs] = useState<WorkLog[]>([]);
 
   useEffect(() => {
-    setProjects(listProjects());
-    setMembers(listMembers());
+    const load = async () => {
+      const [p, m, l] = await Promise.all([listProjects(), listMembers(), listLogs()]);
+      setProjects(p);
+      setMembers(m);
+      setLogs(l);
+    };
+    load().catch(console.error);
   }, []);
 
   const today = toIsoDate(new Date());
@@ -58,8 +58,9 @@ const ProjectsList = (): ReactElement => {
             </thead>
             <tbody>
               {projects.map((p) => {
-                const prog = latestProgress(p.id);
-                const last = lastLogDate(p.id);
+                const pLogs = logs.filter((l) => l.projectId === p.id);
+                const prog = latestProgress(pLogs);
+                const last = lastLogDate(pLogs);
                 const ageDays = last ? daysBetween(last, today) : null;
                 return (
                   <tr key={p.id}>

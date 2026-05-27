@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactElement, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getProject, listMembers, saveProject, toIsoDate } from '../utils/storage';
+import { getProject, listMembers, saveProject } from '../utils/db';
+import { toIsoDate } from '../utils/storage';
 import type { Member, ProjectStatus } from '../types';
 
 const statusOptions: { value: ProjectStatus; label: string }[] = [
@@ -23,18 +24,22 @@ const ProjectForm = (): ReactElement => {
   const [members, setMembers] = useState<Member[]>([]);
 
   useEffect(() => {
-    setMembers(listMembers());
-    if (id) {
-      const p = getProject(id);
-      if (p) {
-        setName(p.name);
-        setDescription(p.description ?? '');
-        setStartDate(p.startDate);
-        setEndDate(p.endDate ?? '');
-        setStatus(p.status);
-        setMemberIds(p.memberIds);
+    const load = async () => {
+      const m = await listMembers();
+      setMembers(m);
+      if (id) {
+        const p = await getProject(id);
+        if (p) {
+          setName(p.name);
+          setDescription(p.description ?? '');
+          setStartDate(p.startDate);
+          setEndDate(p.endDate ?? '');
+          setStatus(p.status);
+          setMemberIds(p.memberIds);
+        }
       }
-    }
+    };
+    load().catch(console.error);
   }, [id]);
 
   const toggleMember = (mid: string) => {
@@ -47,7 +52,7 @@ const ProjectForm = (): ReactElement => {
       alert('프로젝트 이름을 입력해 주세요.');
       return;
     }
-    const saved = saveProject({
+    saveProject({
       id,
       name: name.trim(),
       description: description.trim() || undefined,
@@ -55,8 +60,9 @@ const ProjectForm = (): ReactElement => {
       endDate: endDate || undefined,
       memberIds,
       status,
-    });
-    navigate(`/projects/${saved.id}`);
+    })
+      .then((saved) => navigate(`/projects/${saved.id}`))
+      .catch(console.error);
   };
 
   return (

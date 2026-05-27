@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState, type ReactElement } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { listProjects, listMembers, listLogs } from '../utils/db';
 import {
-  listProjects,
-  listMembers,
   summarize,
   toIsoDate,
   startOfWeek,
@@ -11,7 +10,7 @@ import {
   endOfMonth,
   latestProgress,
 } from '../utils/storage';
-import type { Project, Member } from '../types';
+import type { Project, Member, WorkLog } from '../types';
 
 type Range = 'daily' | 'weekly' | 'monthly';
 
@@ -19,6 +18,7 @@ const SummaryPage = (): ReactElement => {
   const [params, setParams] = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
+  const [logs, setLogs] = useState<WorkLog[]>([]);
 
   const initialProjectId = params.get('projectId') ?? '';
   const initialRange = (params.get('range') as Range) || 'weekly';
@@ -29,8 +29,13 @@ const SummaryPage = (): ReactElement => {
   const [anchor, setAnchor] = useState(initialAnchor);
 
   useEffect(() => {
-    setProjects(listProjects());
-    setMembers(listMembers());
+    const load = async () => {
+      const [p, m, l] = await Promise.all([listProjects(), listMembers(), listLogs()]);
+      setProjects(p);
+      setMembers(m);
+      setLogs(l);
+    };
+    load().catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -57,9 +62,10 @@ const SummaryPage = (): ReactElement => {
     lines.push(`【${rangeLabel} 업무 요약】 ${startDate} ~ ${endDate}`);
     lines.push('');
     for (const p of targetProjects) {
-      const groups = summarize(p.id, startDate, endDate, members);
+      const pLogs = logs.filter((l) => l.projectId === p.id);
+      const groups = summarize(pLogs, startDate, endDate, members);
       if (groups.length === 0) continue;
-      lines.push(`■ ${p.name} (진척률 ${latestProgress(p.id)}%)`);
+      lines.push(`■ ${p.name} (진척률 ${latestProgress(pLogs)}%)`);
       for (const g of groups) {
         lines.push(`  ▸ ${g.memberName}`);
         for (const item of g.items) lines.push(`    - ${item}`);
@@ -117,8 +123,9 @@ const SummaryPage = (): ReactElement => {
         </div>
       ) : (
         targetProjects.map((p) => {
-          const groups = summarize(p.id, startDate, endDate, members);
-          const prog = latestProgress(p.id);
+          const pLogs = logs.filter((l) => l.projectId === p.id);
+          const groups = summarize(pLogs, startDate, endDate, members);
+          const prog = latestProgress(pLogs);
           return (
             <div className="wl-section" key={p.id}>
               <div className="wl-section-head">
