@@ -155,12 +155,14 @@ export const deleteMember = async (id: string): Promise<void> => {
     .select('id, member_ids')
     .contains('member_ids', [id]);
   if (fetchErr) throw fetchErr;
-  for (const p of affected ?? []) {
-    await supabase
-      .from('projects')
-      .update({ member_ids: (p.member_ids as string[]).filter((mid: string) => mid !== id) })
-      .eq('id', p.id);
-  }
+  await Promise.all(
+    (affected ?? []).map((p) =>
+      supabase
+        .from('projects')
+        .update({ member_ids: (p.member_ids as string[]).filter((mid: string) => mid !== id) })
+        .eq('id', p.id)
+    )
+  );
   // work_logs는 FK ON DELETE CASCADE로 자동 처리
   const { error } = await supabase.from('members').delete().eq('id', id);
   if (error) throw error;

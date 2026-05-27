@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactElement } from 'react';
 import { Link } from 'react-router-dom';
 import { listProjects, listMembers, listLogs } from '../utils/db';
 import { latestProgress, lastLogDate, toIsoDate, daysBetween } from '../utils/storage';
+import { useToast } from '../contexts/ToastContext';
 import type { Project, Member, WorkLog } from '../types';
 
 const statusLabel: Record<Project['status'], string> = {
@@ -11,6 +12,7 @@ const statusLabel: Record<Project['status'], string> = {
 };
 
 const ProjectsList = (): ReactElement => {
+  const { showToast } = useToast();
   const [projects, setProjects] = useState<Project[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [logs, setLogs] = useState<WorkLog[]>([]);
@@ -22,7 +24,7 @@ const ProjectsList = (): ReactElement => {
       setMembers(m);
       setLogs(l);
     };
-    load().catch(console.error);
+    load().catch((err) => { console.error(err); showToast('데이터를 불러오는 중 오류가 발생했습니다.', 'error'); });
   }, []);
 
   const today = toIsoDate(new Date());

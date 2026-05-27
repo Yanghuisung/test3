@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactElement, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getProject, listMembers, saveProject } from '../utils/db';
 import { toIsoDate } from '../utils/storage';
+import { useToast } from '../contexts/ToastContext';
 import type { Member, ProjectStatus } from '../types';
 
 const statusOptions: { value: ProjectStatus; label: string }[] = [
@@ -13,6 +14,7 @@ const statusOptions: { value: ProjectStatus; label: string }[] = [
 const ProjectForm = (): ReactElement => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const isEdit = !!id;
 
   const [name, setName] = useState('');
@@ -39,7 +41,7 @@ const ProjectForm = (): ReactElement => {
         }
       }
     };
-    load().catch(console.error);
+    load().catch((err) => { console.error(err); showToast('데이터를 불러오는 중 오류가 발생했습니다.', 'error'); });
   }, [id]);
 
   const toggleMember = (mid: string) => {
@@ -61,8 +63,11 @@ const ProjectForm = (): ReactElement => {
       memberIds,
       status,
     })
-      .then((saved) => navigate(`/projects/${saved.id}`))
-      .catch(console.error);
+      .then((saved) => {
+        showToast(`프로젝트를 ${isEdit ? '수정' : '저장'}했습니다.`, 'success');
+        navigate(`/projects/${saved.id}`);
+      })
+      .catch((err) => { console.error(err); showToast('저장 중 오류가 발생했습니다.', 'error'); });
   };
 
   return (

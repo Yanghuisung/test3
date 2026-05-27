@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback, type ReactElement, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { listMembers, saveMember, deleteMember, listProjects } from '../utils/db';
+import { useToast } from '../contexts/ToastContext';
 import type { Member, Project } from '../types';
 
 const MembersPage = (): ReactElement => {
+  const { showToast } = useToast();
   const [members, setMembers] = useState<Member[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [editing, setEditing] = useState<Member | null>(null);
@@ -17,7 +19,9 @@ const MembersPage = (): ReactElement => {
     setProjects(p);
   }, []);
 
-  useEffect(() => { refresh().catch(console.error); }, [refresh]);
+  useEffect(() => {
+    refresh().catch((err) => { console.error(err); showToast('데이터를 불러오는 중 오류가 발생했습니다.', 'error'); });
+  }, [refresh]);
 
   const resetForm = () => {
     setEditing(null);
@@ -45,8 +49,12 @@ const MembersPage = (): ReactElement => {
       role: role.trim() || undefined,
       email: email.trim() || undefined,
     })
-      .then(() => { resetForm(); return refresh(); })
-      .catch(console.error);
+      .then(() => {
+        showToast(`구성원을 ${editing ? '수정' : '추가'}했습니다.`, 'success');
+        resetForm();
+        return refresh();
+      })
+      .catch((err) => { console.error(err); showToast('저장 중 오류가 발생했습니다.', 'error'); });
   };
 
   const handleDelete = (m: Member) => {
@@ -54,8 +62,12 @@ const MembersPage = (): ReactElement => {
     const note = projectCount > 0 ? `\n현재 ${projectCount}개 프로젝트에 배정되어 있으며, 해당 배정에서도 제거됩니다.` : '';
     if (!confirm(`"${m.name}"을(를) 삭제할까요?${note}`)) return;
     deleteMember(m.id)
-      .then(() => { if (editing?.id === m.id) resetForm(); return refresh(); })
-      .catch(console.error);
+      .then(() => {
+        showToast('구성원을 삭제했습니다.', 'success');
+        if (editing?.id === m.id) resetForm();
+        return refresh();
+      })
+      .catch((err) => { console.error(err); showToast('삭제 중 오류가 발생했습니다.', 'error'); });
   };
 
   return (

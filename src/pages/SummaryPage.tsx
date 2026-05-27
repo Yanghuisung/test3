@@ -11,11 +11,13 @@ import {
   endOfMonth,
   latestProgress,
 } from '../utils/storage';
+import { useToast } from '../contexts/ToastContext';
 import type { Project, Member, WorkLog } from '../types';
 
 type Range = 'daily' | 'weekly' | 'monthly';
 
 const SummaryPage = (): ReactElement => {
+  const { showToast } = useToast();
   const [params, setParams] = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -36,7 +38,7 @@ const SummaryPage = (): ReactElement => {
       setMembers(m);
       setLogs(l);
     };
-    load().catch(console.error);
+    load().catch((err) => { console.error(err); showToast('데이터를 불러오는 중 오류가 발생했습니다.', 'error'); });
   }, []);
 
   useEffect(() => {

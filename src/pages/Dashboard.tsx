@@ -12,6 +12,7 @@ import {
   type DelayedProject,
   type ProgressPoint,
 } from '../utils/storage';
+import { useToast } from '../contexts/ToastContext';
 import type { Project, Member, WorkLog } from '../types';
 
 const STALE_DAYS = 7;
@@ -51,6 +52,8 @@ const ProgressMiniChart = ({ data }: { data: ProgressPoint[] }): ReactElement =>
 };
 
 const Dashboard = (): ReactElement => {
+  const { showToast } = useToast();
+  const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [logs, setLogs] = useState<WorkLog[]>([]);
@@ -67,8 +70,13 @@ const Dashboard = (): ReactElement => {
       setLogs(l);
       setKpi(dashboardKpi(p, l, m, today));
       setDelayed(delayedProjects(p, l, STALE_DAYS, today));
+      setLoading(false);
     };
-    load().catch(console.error);
+    load().catch((err) => {
+      console.error(err);
+      showToast('데이터를 불러오는 중 오류가 발생했습니다.', 'error');
+      setLoading(false);
+    });
   }, []);
 
   const activeProjects = projects.filter((p) => p.status === 'active');
@@ -76,6 +84,16 @@ const Dashboard = (): ReactElement => {
   const recentLogs = [...logs]
     .sort((a, b) => b.date.localeCompare(a.date) || b.updatedAt.localeCompare(a.updatedAt))
     .slice(0, 6);
+
+  if (loading) {
+    return (
+      <div className="wl-container">
+        <div className="wl-empty" style={{ minHeight: 300 }}>
+          <div className="loading-spinner" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="wl-container">
@@ -224,7 +242,7 @@ const Dashboard = (): ReactElement => {
       </div>
 
       <div className="wl-kpi-hint" style={{ textAlign: 'center', marginTop: 24 }}>
-        오늘로부터 마지막 일지까지 {recentLogs[0] ? `${daysBetween(recentLogs[0].date, today)}일` : '-'} 경과
+        오늘로부터 마지막 일지까지 {recentLogs[0] ? `${Math.max(0, daysBetween(recentLogs[0].date, today))}일` : '-'} 경과
       </div>
     </div>
   );

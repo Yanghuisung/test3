@@ -2,11 +2,13 @@ import { useEffect, useState, useCallback, type ReactElement } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getMember, logsByMember, listProjects, deleteLog } from '../utils/db';
 import { useCurrentUser } from '../contexts/CurrentUserContext';
+import { useToast } from '../contexts/ToastContext';
 import type { Member, WorkLog, Project } from '../types';
 
 const MemberDetail = (): ReactElement => {
   const { id } = useParams<{ id: string }>();
   const { currentMemberId } = useCurrentUser();
+  const { showToast } = useToast();
 
   const [member, setMember] = useState<Member | undefined>();
   const [logs, setLogs] = useState<WorkLog[]>([]);
@@ -21,7 +23,9 @@ const MemberDetail = (): ReactElement => {
     setProjects(p);
   }, [id]);
 
-  useEffect(() => { refresh().catch(console.error); }, [refresh]);
+  useEffect(() => {
+    refresh().catch((err) => { console.error(err); showToast('데이터를 불러오는 중 오류가 발생했습니다.', 'error'); });
+  }, [refresh]);
 
   if (notFound) return (
     <div className="wl-container">
@@ -39,7 +43,9 @@ const MemberDetail = (): ReactElement => {
 
   const handleLogDelete = (log: WorkLog) => {
     if (!confirm('이 일지를 삭제할까요?')) return;
-    deleteLog(log.id).then(() => refresh()).catch(console.error);
+    deleteLog(log.id)
+      .then(() => refresh())
+      .catch((err) => { console.error(err); showToast('삭제 중 오류가 발생했습니다.', 'error'); });
   };
 
   const byProject = new Map<string, WorkLog[]>();

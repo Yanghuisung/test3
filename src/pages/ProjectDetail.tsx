@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getProject, listMembers, logsByProject, deleteProject, deleteLog } from '../utils/db';
 import { latestProgress, progressSeries } from '../utils/storage';
 import { useCurrentUser } from '../contexts/CurrentUserContext';
+import { useToast } from '../contexts/ToastContext';
 import type { Project, Member, WorkLog } from '../types';
 
 const statusLabel: Record<Project['status'], string> = {
@@ -15,6 +16,7 @@ const ProjectDetail = (): ReactElement => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentMemberId } = useCurrentUser();
+  const { showToast } = useToast();
   const [project, setProject] = useState<Project | undefined>();
   const [members, setMembers] = useState<Member[]>([]);
   const [logs, setLogs] = useState<WorkLog[]>([]);
@@ -27,7 +29,9 @@ const ProjectDetail = (): ReactElement => {
     setLogs(l);
   }, [id]);
 
-  useEffect(() => { refresh().catch(console.error); }, [refresh]);
+  useEffect(() => {
+    refresh().catch((err) => { console.error(err); showToast('데이터를 불러오는 중 오류가 발생했습니다.', 'error'); });
+  }, [refresh]);
 
   if (!project) {
     return (
@@ -47,14 +51,14 @@ const ProjectDetail = (): ReactElement => {
     if (!confirm(`"${project.name}" 프로젝트를 삭제할까요? 관련 일지도 함께 제거됩니다.`)) return;
     deleteProject(project.id)
       .then(() => navigate('/projects'))
-      .catch(console.error);
+      .catch((err) => { console.error(err); showToast('삭제 중 오류가 발생했습니다.', 'error'); });
   };
 
   const handleLogDelete = (logId: string) => {
     if (!confirm('이 일지를 삭제할까요?')) return;
     deleteLog(logId)
       .then(() => refresh())
-      .catch(console.error);
+      .catch((err) => { console.error(err); showToast('삭제 중 오류가 발생했습니다.', 'error'); });
   };
 
   // Sparkline
