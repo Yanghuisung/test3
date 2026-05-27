@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactElement } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { listProjects, listMembers, listLogs } from '../utils/db';
 import {
   summarize,
@@ -18,6 +18,7 @@ type Range = 'daily' | 'weekly' | 'monthly';
 
 const SummaryPage = (): ReactElement => {
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -60,6 +61,12 @@ const SummaryPage = (): ReactElement => {
 
   const rangeLabel = range === 'daily' ? '일간' : range === 'weekly' ? '주간' : '월간';
 
+  const handleReportPdf = () => {
+    const qs = new URLSearchParams({ range, date: anchor });
+    if (projectId) qs.set('projectId', projectId);
+    navigate(`/report?${qs.toString()}`);
+  };
+
   const handleCopy = () => {
     const lines: string[] = [];
     lines.push(`【${rangeLabel} 업무 요약】 ${startDate} ~ ${endDate}`);
@@ -96,7 +103,11 @@ const SummaryPage = (): ReactElement => {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="wl-btn" onClick={handleCopy}>전체 복사</button>
-          <button className="wl-btn" onClick={() => window.print()}>인쇄</button>
+          {range !== 'daily' && (
+            <button className="wl-btn wl-btn-primary" onClick={handleReportPdf}>
+              보고서 PDF
+            </button>
+          )}
         </div>
       </div>
 

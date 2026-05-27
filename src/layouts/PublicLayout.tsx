@@ -13,6 +13,7 @@ const WorkLogNew     = lazy(() => import('../pages/WorkLogNew'));
 const WorkLogEdit    = lazy(() => import('../pages/WorkLogEdit'));
 const MemberDetail   = lazy(() => import('../pages/MemberDetail'));
 const SummaryPage    = lazy(() => import('../pages/SummaryPage'));
+const WorkLogReport  = lazy(() => import('../pages/WorkLogReport'));
 const NotFound       = lazy(() => import('../pages/NotFound'));
 
 const Loading = (): ReactElement => (
@@ -42,6 +43,7 @@ const PublicLayout = (): ReactElement => {
             <Route path="/logs/new"             element={<WorkLogNew />} />
             <Route path="/logs/:id/edit"       element={<WorkLogEdit />} />
             <Route path="/summary"              element={<SummaryPage />} />
+            <Route path="/report"               element={<WorkLogReport />} />
             <Route path="*"                     element={<NotFound />} />
           </Routes>
         </Suspense>

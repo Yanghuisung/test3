@@ -1,0 +1,260 @@
+/* ============================================
+   Report / PDF Print Styles
+   ============================================ */
+
+/* ── Screen-only control bar ── */
+.rpt-screen-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 24px;
+  background: var(--surface, #f9fafb);
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  flex-wrap: wrap;
+}
+.rpt-screen-hint {
+  font-size: 13px;
+  color: var(--text-muted, #6b7280);
+}
+
+/* ── A4 report page (screen preview) ── */
+.rpt-page {
+  max-width: 794px; /* ~210mm at 96dpi */
+  margin: 28px auto 60px;
+  padding: 52px 60px 52px;
+  background: #fff;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.12);
+  min-height: 1123px; /* ~297mm at 96dpi */
+  font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  font-size: 10.5pt;
+  color: #111;
+  line-height: 1.7;
+}
+
+/* ── Header: title-left + approval-right ── */
+.rpt-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.rpt-title-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+.rpt-doc-title {
+  font-size: 19pt;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #0F1B33;
+  margin: 0;
+}
+.rpt-doc-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 9.5pt;
+  color: #4A5A7C;
+  margin-top: 6px;
+}
+.rpt-doc-meta span { display: block; }
+
+/* ── 결재란 (3-column approval table) ── */
+.rpt-approval {
+  flex-shrink: 0;
+  border-collapse: collapse;
+  width: 270px;
+}
+.rpt-approval caption {
+  font-size: 8.5pt;
+  font-weight: 700;
+  color: #0F1B33;
+  letter-spacing: 3px;
+  text-align: center;
+  caption-side: top;
+  padding-bottom: 4px;
+}
+.rpt-approval th {
+  background: #1B2A4A;
+  color: #fff;
+  font-size: 9pt;
+  font-weight: 600;
+  text-align: center;
+  padding: 7px 0;
+  border: 1.5px solid #1B2A4A;
+  letter-spacing: 2px;
+  width: 90px;
+}
+.rpt-approval-sig td {
+  height: 64px;
+  border: 1.5px solid #1B2A4A;
+  border-top: none;
+}
+.rpt-approval-name td {
+  border: 1.5px solid #1B2A4A;
+  border-top: 1px solid #b0bec8;
+  padding: 5px 8px;
+  text-align: center;
+  font-size: 9pt;
+}
+.rpt-name-input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px dashed #aaa;
+  outline: none;
+  text-align: center;
+  font-size: 9pt;
+  font-family: inherit;
+  background: transparent;
+  color: #111;
+  padding: 0 2px;
+}
+.rpt-name-input::placeholder { color: #bbb; }
+
+/* ── Horizontal rule after header ── */
+.rpt-divider {
+  border: none;
+  border-top: 2.5px solid #1B2A4A;
+  margin: 4px 0 22px;
+}
+
+/* ── Per-project section ── */
+.rpt-project {
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.rpt-project:last-of-type { border-bottom: none; }
+
+.rpt-project-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.rpt-project-name {
+  font-size: 12.5pt;
+  font-weight: 700;
+  color: #0F1B33;
+}
+.rpt-project-badge {
+  font-size: 9.5pt;
+  color: #4A5A7C;
+  background: #f0f2f8;
+  border: 1px solid #dde2ee;
+  border-radius: 4px;
+  padding: 2px 10px;
+}
+.rpt-progress-bar {
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.rpt-progress-fill {
+  height: 100%;
+  background: #1B2A4A;
+  border-radius: 3px;
+}
+
+/* ── Member work items ── */
+.rpt-member-block { margin: 6px 0 10px 4px; }
+.rpt-member-name {
+  font-size: 10.5pt;
+  font-weight: 600;
+  color: #1B2A4A;
+  margin-bottom: 3px;
+}
+.rpt-item-list {
+  margin: 0 0 0 22px;
+  padding: 0;
+  font-size: 10pt;
+  color: #222;
+  line-height: 1.85;
+}
+.rpt-item-list li { margin-bottom: 1px; list-style-type: disc; }
+
+/* ── Hours table ── */
+.rpt-hours-wrap {
+  margin: 12px 0 0 4px;
+  padding-top: 10px;
+  border-top: 1px dashed #d1d5db;
+}
+.rpt-hours-label {
+  font-size: 9pt;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+}
+.rpt-hours-table {
+  border-collapse: collapse;
+  font-size: 9.5pt;
+  min-width: 220px;
+}
+.rpt-hours-table th,
+.rpt-hours-table td {
+  padding: 5px 12px;
+  border: 1px solid #d1d5db;
+  text-align: left;
+}
+.rpt-hours-table th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #4A5A7C;
+}
+.rpt-hours-total td {
+  font-weight: 700;
+  background: #f8fafc;
+  border-top: 2px solid #1B2A4A;
+}
+
+/* ── Footer ── */
+.rpt-doc-footer {
+  margin-top: 48px;
+  text-align: center;
+  font-size: 8.5pt;
+  color: #9ca3af;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 10px;
+}
+
+/* ═══════════════════════════════════════════
+   @media print
+   ═══════════════════════════════════════════ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 16mm 14mm;
+  }
+
+  /* hide site chrome */
+  .topbar,
+  .navbar,
+  .footer,
+  .rpt-screen-controls {
+    display: none !important;
+  }
+
+  /* remove preview shadow/margin */
+  .rpt-page {
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    min-height: auto;
+  }
+
+  /* keep page breaks tidy */
+  .rpt-project { page-break-inside: avoid; }
+
+  /* show dashed border on name inputs when printed */
+  .rpt-name-input { border-bottom: 1px solid #888; }
+}
