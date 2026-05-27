@@ -91,7 +91,6 @@ const WorkLogReport = (): ReactElement => {
 
           {/* 결재란 */}
           <table className="rpt-approval">
-            <caption>결 &nbsp; 재 &nbsp; 란</caption>
             <thead>
               <tr>
                 <th>작 성</th>

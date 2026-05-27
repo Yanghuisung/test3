@@ -71,15 +71,6 @@
   border-collapse: collapse;
   width: 270px;
 }
-.rpt-approval caption {
-  font-size: 8.5pt;
-  font-weight: 700;
-  color: #0F1B33;
-  letter-spacing: 3px;
-  text-align: center;
-  caption-side: top;
-  padding-bottom: 4px;
-}
 .rpt-approval th {
   background: #1B2A4A;
   color: #fff;
