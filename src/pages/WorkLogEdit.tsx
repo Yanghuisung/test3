@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactElement, type FormEvent, type KeyboardEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getLog, listProjects, listMembers, saveLog } from '../utils/db';
+import { useCurrentUser } from '../contexts/CurrentUserContext';
 import type { Project, Member } from '../types';
 
 const PRESETS = ['회의', '개발', '검토', '보고', '테스트', '설계', '분석', '문서화', '배포'];
@@ -8,6 +9,7 @@ const PRESETS = ['회의', '개발', '검토', '보고', '테스트', '설계', 
 const WorkLogEdit = (): ReactElement => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { currentMemberId } = useCurrentUser();
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -25,6 +27,7 @@ const WorkLogEdit = (): ReactElement => {
     const load = async () => {
       const [log, p, m] = await Promise.all([getLog(id!), listProjects(), listMembers()]);
       if (!log) { setNotFound(true); setLoading(false); return; }
+      if (log.memberId !== currentMemberId) { setNotFound(true); setLoading(false); return; }
       setProjects(p);
       setMembers(m);
       setProjectId(log.projectId);
@@ -78,7 +81,8 @@ const WorkLogEdit = (): ReactElement => {
   if (notFound) return (
     <div className="wl-container">
       <div className="wl-empty">
-        <h3>일지를 찾을 수 없습니다</h3>
+        <h3>일지를 찾을 수 없거나 수정 권한이 없습니다</h3>
+        <p className="wl-page-sub" style={{ marginBottom: 16 }}>본인이 작성한 일지만 수정할 수 있습니다. 상단 메뉴에서 사용자를 먼저 선택해 주세요.</p>
         <Link to="/" className="wl-btn">대시보드로</Link>
       </div>
     </div>

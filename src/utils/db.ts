@@ -177,6 +177,16 @@ export const listLogs = async (): Promise<WorkLog[]> => {
   return (data ?? []).map(toWorkLog);
 };
 
+export const logsByMember = async (memberId: string): Promise<WorkLog[]> => {
+  const { data, error } = await supabase
+    .from('work_logs')
+    .select('*')
+    .eq('member_id', memberId)
+    .order('date', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(toWorkLog);
+};
+
 export const logsByProject = async (projectId: string): Promise<WorkLog[]> => {
   const { data, error } = await supabase
     .from('work_logs')

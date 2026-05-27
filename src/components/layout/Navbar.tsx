@@ -1,6 +1,7 @@
 import { useState, useEffect, type ReactElement, type MouseEvent } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useCurrentUser } from '../../contexts/CurrentUserContext';
 import site from '../../config/site';
 
 const Navbar = (): ReactElement => {
@@ -8,8 +9,10 @@ const Navbar = (): ReactElement => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showUserPicker, setShowUserPicker] = useState(false);
   const location = useLocation();
   const { mode, toggleTheme, colorTheme, setColorTheme } = useTheme();
+  const { currentMember, members, setCurrentMemberId } = useCurrentUser();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -92,6 +95,39 @@ const Navbar = (): ReactElement => {
             </ul>
 
             <div className="nav-actions">
+              <div className="user-picker-wrapper">
+                <button
+                  className="user-picker-btn"
+                  onClick={() => setShowUserPicker(!showUserPicker)}
+                  aria-label="사용자 선택"
+                  title={currentMember ? `${currentMember.name} (${currentMember.role ?? ''})` : '사용자 선택'}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span className="user-picker-name">{currentMember ? currentMember.name : '선택'}</span>
+                </button>
+                {showUserPicker && (
+                  <>
+                    <div className="user-picker-overlay" onClick={() => setShowUserPicker(false)} />
+                    <div className="user-picker-dropdown">
+                      <div className="user-picker-title">현재 사용자</div>
+                      {members.length === 0 && <div className="user-picker-empty">구성원이 없습니다</div>}
+                      {members.map((m) => (
+                        <button
+                          key={m.id}
+                          className={`user-picker-item${currentMember?.id === m.id ? ' active' : ''}`}
+                          onClick={() => { setCurrentMemberId(m.id); setShowUserPicker(false); }}
+                        >
+                          <span className="user-picker-item-name">{m.name}</span>
+                          {m.role && <span className="user-picker-item-role">{m.role}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
               <div className="color-picker-wrapper">
                 <button
                   className="color-picker-btn"

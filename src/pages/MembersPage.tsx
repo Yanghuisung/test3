@@ -79,7 +79,16 @@ const MembersPage = (): ReactElement => {
             </div>
             <div className="wl-field">
               <label>역할</label>
-              <input type="text" value={role} onChange={(e) => setRole(e.target.value)} placeholder="개발자 / PM / 연구원" />
+              <input type="text" value={role} onChange={(e) => setRole(e.target.value)} list="role-options" placeholder="PM / 팀원 / 개발자" />
+              <datalist id="role-options">
+                <option value="PM" />
+                <option value="팀원" />
+                <option value="연구원" />
+                <option value="개발자" />
+                <option value="기획자" />
+                <option value="디자이너" />
+                <option value="QA" />
+              </datalist>
             </div>
             <div className="wl-field">
               <label>이메일</label>
@@ -109,8 +118,16 @@ const MembersPage = (): ReactElement => {
                 const assigned = projects.filter((p) => p.memberIds.includes(m.id));
                 return (
                   <tr key={m.id}>
-                    <td style={{ fontWeight: 500 }}>{m.name}</td>
-                    <td>{m.role ?? '—'}</td>
+                    <td style={{ fontWeight: 500 }}>
+                      <Link to={`/members/${m.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                        {m.name}
+                      </Link>
+                    </td>
+                    <td>
+                      {m.role ? (
+                        <span className={`wl-badge ${m.role === 'PM' ? 'wl-badge-pm' : 'wl-badge-role'}`}>{m.role}</span>
+                      ) : '—'}
+                    </td>
                     <td>{m.email ?? '—'}</td>
                     <td>
                       {assigned.length === 0 ? <span className="wl-kpi-hint">없음</span> : (

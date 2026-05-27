@@ -317,6 +317,27 @@
 .wl-delayed-name a:hover { text-decoration: underline; }
 .wl-delayed-reason { color: #C8102E; font-size: 13px; }
 
+/* ── PM / Role badges ── */
+.wl-badge-pm   { background: rgba(27, 42, 74, 0.15); color: #1B2A4A; font-weight: 700; }
+.wl-badge-role { background: rgba(0, 133, 90, 0.10); color: #00855A; }
+
+/* ── Member group (PM / 팀원 구분) ── */
+.wl-member-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wl-member-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  min-width: 36px;
+}
+.wl-chip-pm {
+  background: rgba(27, 42, 74, 0.12);
+  color: #1B2A4A;
+  border-color: rgba(27, 42, 74, 0.25);
+  font-weight: 600;
+}
+
 /* ── Preset tags ── */
 .wl-presets {
   display: flex;

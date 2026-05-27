@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, type ReactElement } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getProject, listMembers, logsByProject, deleteProject, deleteLog } from '../utils/db';
 import { latestProgress, progressSeries } from '../utils/storage';
+import { useCurrentUser } from '../contexts/CurrentUserContext';
 import type { Project, Member, WorkLog } from '../types';
 
 const statusLabel: Record<Project['status'], string> = {
@@ -13,6 +14,7 @@ const statusLabel: Record<Project['status'], string> = {
 const ProjectDetail = (): ReactElement => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentMemberId } = useCurrentUser();
   const [project, setProject] = useState<Project | undefined>();
   const [members, setMembers] = useState<Member[]>([]);
   const [logs, setLogs] = useState<WorkLog[]>([]);
@@ -120,17 +122,35 @@ const ProjectDetail = (): ReactElement => {
         <div className="wl-section-head">
           <h2 className="wl-section-title">참여 구성원</h2>
         </div>
-        <div className="wl-chip-list">
-          {project.memberIds.length === 0 && <span className="wl-kpi-hint">배정된 구성원이 없습니다.</span>}
-          {project.memberIds.map((mid) => {
-            const m = members.find((x) => x.id === mid);
-            return m ? (
-              <span key={mid} className="wl-chip">
-                {m.name}{m.role ? ` · ${m.role}` : ''}
-              </span>
-            ) : null;
-          })}
-        </div>
+        {project.memberIds.length === 0 ? (
+          <span className="wl-kpi-hint">배정된 구성원이 없습니다.</span>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {['PM', '팀원'].map((groupLabel) => {
+              const group = project.memberIds
+                .map((mid) => members.find((x) => x.id === mid))
+                .filter((m): m is Member => {
+                  if (!m) return false;
+                  return groupLabel === 'PM' ? m.role === 'PM' : m.role !== 'PM';
+                });
+              if (group.length === 0) return null;
+              return (
+                <div key={groupLabel} className="wl-member-group">
+                  <span className="wl-member-group-label">{groupLabel}</span>
+                  <div className="wl-chip-list">
+                    {group.map((m) => (
+                      <Link key={m.id} to={`/members/${m.id}`}
+                        className={`wl-chip ${m.role === 'PM' ? 'wl-chip-pm' : ''}`}
+                        style={{ textDecoration: 'none' }}>
+                        {m.name}{m.role && m.role !== 'PM' ? ` · ${m.role}` : ''}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="wl-section">
@@ -167,8 +187,14 @@ const ProjectDetail = (): ReactElement => {
                     <td>{l.hours ? `${l.hours}h` : '—'}</td>
                     <td>{typeof l.progress === 'number' ? `${l.progress}%` : '—'}</td>
                     <td style={{ whiteSpace: 'nowrap' }}>
-                      <Link to={`/logs/${l.id}/edit`} className="wl-btn wl-btn-sm" style={{ marginRight: 6 }}>수정</Link>
-                      <button className="wl-btn wl-btn-sm wl-btn-danger" onClick={() => handleLogDelete(l.id)}>삭제</button>
+                      {currentMemberId === l.memberId ? (
+                        <>
+                          <Link to={`/logs/${l.id}/edit`} className="wl-btn wl-btn-sm" style={{ marginRight: 6 }}>수정</Link>
+                          <button className="wl-btn wl-btn-sm wl-btn-danger" onClick={() => handleLogDelete(l.id)}>삭제</button>
+                        </>
+                      ) : (
+                        <span className="wl-kpi-hint">열람만</span>
+                      )}
                     </td>
                   </tr>
                 );

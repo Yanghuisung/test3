@@ -11,6 +11,7 @@ const ProjectForm    = lazy(() => import('../pages/ProjectForm'));
 const MembersPage    = lazy(() => import('../pages/MembersPage'));
 const WorkLogNew     = lazy(() => import('../pages/WorkLogNew'));
 const WorkLogEdit    = lazy(() => import('../pages/WorkLogEdit'));
+const MemberDetail   = lazy(() => import('../pages/MemberDetail'));
 const SummaryPage    = lazy(() => import('../pages/SummaryPage'));
 const NotFound       = lazy(() => import('../pages/NotFound'));
 
@@ -37,6 +38,7 @@ const PublicLayout = (): ReactElement => {
             <Route path="/projects/:id/edit"    element={<ProjectForm />} />
             <Route path="/projects/:id"         element={<ProjectDetail />} />
             <Route path="/members"              element={<MembersPage />} />
+            <Route path="/members/:id"         element={<MemberDetail />} />
             <Route path="/logs/new"             element={<WorkLogNew />} />
             <Route path="/logs/:id/edit"       element={<WorkLogEdit />} />
             <Route path="/summary"              element={<SummaryPage />} />
