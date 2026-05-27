@@ -245,7 +245,13 @@ const ymd = (base: Date, offset: number): string => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
+// React StrictMode에서 useEffect가 두 번 호출되는 것을 방지하는 모듈 레벨 플래그
+let _seeding = false;
+
 export const seedIfEmpty = async (): Promise<void> => {
+  if (_seeding) return;
+  _seeding = true;
+  try {
   const [projects, members] = await Promise.all([listProjects(), listMembers()]);
   if (projects.length > 0 || members.length > 0) return;
 
@@ -287,4 +293,7 @@ export const seedIfEmpty = async (): Promise<void> => {
     saveLog({ projectId: p2.id, memberId: m3.id, date: ymd(today, -4), items: ['데이터셋 정제 스크립트 작성', '학습 베이스라인 확보'], hours: 7, progress: 20 }),
     saveLog({ projectId: p2.id, memberId: m1.id, date: ymd(today, -2), items: ['파인튜닝 파라미터 비교 실험', '평가 메트릭 정의'], hours: 4, progress: 30 }),
   ]);
+  } finally {
+    _seeding = false;
+  }
 };
