@@ -45,7 +45,7 @@ const WorkLogReport = (): ReactElement => {
       const [p, l, s] = await Promise.all([
         listProjects(),
         listLogs(),
-        listReportSummariesForPeriod(range, startDate, endDate),
+        listReportSummariesForPeriod(range, startDate, endDate).catch(() => [] as import('../utils/db').ReportSummary[]),
       ]);
       setProjects(p);
       setLogs(l);
