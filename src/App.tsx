@@ -8,7 +8,7 @@ function App(): ReactElement {
   return (
     <ThemeProvider>
       <ToastProvider>
-        <Router>
+        <Router basename={import.meta.env.BASE_URL}>
           <div className="App">
             <Routes>
               <Route path="*" element={<PublicLayout />} />
