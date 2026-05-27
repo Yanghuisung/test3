@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # gh-pages 브랜치 푸시 권한
+  contents: write
 
 concurrency:
   group: gh-pages
@@ -15,6 +15,12 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
+    env:
+      GITHUB_PAGES: 'true'
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -26,11 +32,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify Supabase secrets
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ]; then
+            echo "❌ VITE_SUPABASE_URL secret is not set"
+            exit 1
+          fi
+          if [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "❌ VITE_SUPABASE_ANON_KEY secret is not set"
+            exit 1
+          fi
+          echo "✅ Supabase secrets confirmed"
+
       - name: Build
-        env:
-          GITHUB_PAGES: 'true'
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
       - name: SPA 404 fallback
