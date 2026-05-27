@@ -17,6 +17,17 @@
   font-size: 13px;
   color: var(--text-muted, #6b7280);
 }
+.rpt-project-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--input-bg, #fff);
+  color: var(--text-primary, #111);
+  font-size: 14px;
+  font-family: inherit;
+  min-width: 180px;
+  cursor: pointer;
+}
 
 /* ── A4 report page (screen preview) ── */
 .rpt-page {

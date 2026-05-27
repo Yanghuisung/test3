@@ -16,7 +16,7 @@ type Range = 'weekly' | 'monthly';
 
 const WorkLogReport = (): ReactElement => {
   const { showToast } = useToast();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [logs, setLogs] = useState<WorkLog[]>([]);
@@ -25,6 +25,12 @@ const WorkLogReport = (): ReactElement => {
   const range = (params.get('range') as Range) || 'weekly';
   const anchor = params.get('date') || toIsoDate(new Date());
   const projectId = params.get('projectId') || '';
+
+  const handleProjectChange = (id: string) => {
+    const next = new URLSearchParams({ range, date: anchor });
+    if (id) next.set('projectId', id);
+    setParams(next, { replace: true });
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -68,8 +74,17 @@ const WorkLogReport = (): ReactElement => {
         <Link to={`/summary?range=${range}&date=${anchor}${projectId ? `&projectId=${projectId}` : ''}`} className="wl-btn">
           ← 요약으로
         </Link>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <span className="rpt-screen-hint">결재란에 이름을 입력한 뒤 PDF 저장을 눌러 주세요</span>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <select
+            className="rpt-project-select"
+            value={projectId}
+            onChange={(e) => handleProjectChange(e.target.value)}
+          >
+            <option value="">전체 프로젝트</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
           <button className="wl-btn wl-btn-primary" onClick={() => window.print()}>
             PDF 저장 (인쇄)
           </button>
@@ -84,6 +99,9 @@ const WorkLogReport = (): ReactElement => {
           <div className="rpt-title-block">
             <h1 className="rpt-doc-title">{rangeLabel} 업무 보고서</h1>
             <div className="rpt-doc-meta">
+              {projectId && (
+                <span>프로젝트 : {projects.find((p) => p.id === projectId)?.name ?? ''}</span>
+              )}
               <span>보고 기간 : {startDate} ~ {endDate}</span>
               <span>작 성 일 &nbsp;: {today}</span>
             </div>
