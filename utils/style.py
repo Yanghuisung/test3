@@ -1,3 +1,4 @@
+import base64
 import streamlit as st
 
 # ── Design System Tokens (Worklog Design System) ──────────────
@@ -279,32 +280,13 @@ def page_header(icon: str, title: str, subtitle: str = ""):
         f'letter-spacing:0.01em">{subtitle}</div>'
     ) if subtitle else ''
     st.markdown(f"""
-    <div style="
-        background: linear-gradient(135deg, {NAVY_700} 0%, {NAVY_800} 50%, {NAVY_900} 100%);
-        color: white;
-        padding: 1.4rem 2rem;
-        border-radius: 12px;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 20px rgba(15,27,51,0.18);
-        position: relative;
-        overflow: hidden;
-    ">
-        <div style="
-            position:absolute;top:-30px;right:-20px;
-            width:140px;height:140px;border-radius:50%;
-            background:rgba(61,111,224,0.15);pointer-events:none
-        "></div>
-        <div style="
-            position:absolute;bottom:-40px;right:80px;
-            width:100px;height:100px;border-radius:50%;
-            background:rgba(61,111,224,0.08);pointer-events:none
-        "></div>
-        <div style="position:relative">
-            <div style="font-size:1.65rem;font-weight:800;letter-spacing:-0.02em;color:white;line-height:1.2">
-                {icon}&nbsp; {title}
-            </div>
-            {sub_html}
+    <div style="background:linear-gradient(135deg,{NAVY_700} 0%,{NAVY_800} 50%,{NAVY_900} 100%);
+                color:white;padding:1.4rem 2rem;border-radius:12px;
+                margin-bottom:1.5rem;box-shadow:0 4px 20px rgba(15,27,51,0.18)">
+        <div style="font-size:1.65rem;font-weight:800;letter-spacing:-0.02em;color:white;line-height:1.2">
+            {icon}&nbsp; {title}
         </div>
+        {sub_html}
     </div>
     """, unsafe_allow_html=True)
 
@@ -361,20 +343,21 @@ def progress_badge(progress: int) -> str:
 
 
 def sidebar_brand():
+    _svg_b64 = base64.b64encode(_WORKLOG_MARK_SVG.encode()).decode()
     st.sidebar.markdown(f"""
-    <div style="
-        text-align:center;
-        padding: 1.4rem 0 1.6rem;
-        border-bottom: 1px solid rgba(255,255,255,0.10);
-        margin-bottom: 1.2rem;
-    ">
+    <div style="padding:1.4rem 0 1.6rem;
+                border-bottom:1px solid rgba(255,255,255,0.10);
+                margin-bottom:1.2rem">
         <div style="display:flex;align-items:center;justify-content:center;gap:10px">
-            {_WORKLOG_MARK_SVG}
+            <img src="data:image/svg+xml;base64,{_svg_b64}"
+                 width="36" height="36" style="border-radius:8px;flex-shrink:0">
             <div style="text-align:left">
-                <div style="font-size:1.05rem;font-weight:800;color:#fff;letter-spacing:-0.01em;line-height:1.1">
+                <div style="font-size:1.05rem;font-weight:800;color:#fff;
+                            letter-spacing:-0.01em;line-height:1.1">
                     Work<span style="color:{ACCENT}">Log</span>
                 </div>
-                <div style="font-size:0.62rem;color:rgba(255,255,255,0.45);letter-spacing:0.08em;text-transform:uppercase;margin-top:1px">
+                <div style="font-size:0.62rem;color:rgba(255,255,255,0.45);
+                            letter-spacing:0.08em;text-transform:uppercase;margin-top:1px">
                     한전KDN 전력ICT연구원
                 </div>
             </div>
