@@ -171,3 +171,15 @@ def save_summary(project_key: str, range_type: str, start_date: str, end_date: s
 def delete_summary(id: str) -> None:
     sb = get_supabase()
     sb.table('report_summaries').delete().eq('id', id).execute()
+
+
+def list_all_summaries() -> list[dict]:
+    sb = get_supabase()
+    try:
+        res = (sb.table('report_summaries')
+               .select('*')
+               .order('created_at', desc=True)
+               .execute())
+        return res.data or []
+    except Exception:
+        return []

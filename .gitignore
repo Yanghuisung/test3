@@ -10,6 +10,7 @@ nul
 tsconfig.tsbuildinfo
 
 # Python
+seed_data.py
 __pycache__/
 *.pyc
 *.pyo
